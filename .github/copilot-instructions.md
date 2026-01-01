@@ -1,138 +1,154 @@
 # Git MCP - AI Coding Instructions
 
 ## Project Overview
-**gitMCP** is a Model Context Protocol (MCP) server that exposes Git repository operations as tools for AI agents. It extracts structured Git metadata (status, diffs, change summaries) and makes them available via FastMCP with built-in safety features (redaction, truncation).
 
-**Key Purpose**: Enable AI agents to understand repository state without direct Git access; useful for code review, understanding changes, and contextual analysis.
+**gitMCP** is a Model Context Protocol (MCP) server exposing Git analytics for development managers. It provides 7 analytical tools for team insights: project dashboard, commit history, developer stats, branch tracking, file change monitoring, developer comparison, and repository sync.
+
+**Key Purpose**: Enable managers to understand team productivity, code health, and project trends through natural language conversations with Claude—no Git commands required.
 
 ## Architecture & Components
 
-### Core Architecture Pattern
-The project uses a **modular registration pattern** where each feature area (status, diff, snippet, explainer) is in a separate module that:
-1. Implements async Git command runners via [git_runner.py](git_runner.py)
-2. Parses raw Git output into structured dicts
-3. Exposes one or more MCP tools via a `register(mcp: FastMCP)` function
-4. Gets registered in [server.py](server.py) during startup
+### Core Pattern: Three-Layer Tool Architecture
 
-### Key Modules
+Each tool in `tools/` follows this pattern:
+1. **Async Git Fetcher** (`get_*_raw()`) - Executes Git command with filters via [git_runner.py](git_runner.py)
+2. **Parser** (`parse_*()`) - Transforms raw output into structured dicts
+3. **MCP Tool** (`@mcp.tool()` in `register()`) - Exposes parsed data as API endpoint
 
-**[git_runner.py](git_runner.py)** - Foundation layer
-- Single async function `run_git(repo_path, args, timeout_s=8)` that executes all Git commands
-- Environment: Disables pagers (`GIT_PAGER=""`, `GIT_TERMINAL_PROMPT="0"`) to ensure clean output
-- Validation: Checks Git executable exists via `shutil.which("git")`
-- All stderr logged; non-zero exit raises `RuntimeError`
+Example flow: [git_commit_history.py](tools/git_commit_history.py)
+- `get_commit_history_raw()` runs `git log --numstat --pretty=format:COMMIT|%H|%an|%ae|%ai|%s`
+- `parse_commit_history()` parses each `COMMIT|` line into dict with author, date, files changed, stats
+- `@mcp.tool()` decorated function exposes as "get_commit_history" tool with filters (since, until, author, max_count)
 
-**[git_status.py](git_status.py)** - Repository status parsing
-- `parse_porcelain_status()`: Parses `git status --porcelain=2 --branch` into structured dict with:
-  - `head`: branch name, OID, is_initial flag
-  - `tracking`: upstream ref, ahead/behind counts
-  - `working_tree`: lists of untracked, staged, unstaged, conflict files
-- Handles porcelain v2 edge cases (rename records `2 XY...`, conflicts `u XY...`)
-- Tool: `repo_status(repo_path)` returns complete status JSON
+### Tool Modules
 
-**[git_diff.py](git_diff.py)** - Change analysis
-- `parse_numstat()`: Maps `--numstat` output to {path: {additions, deletions, is_binary}}
-- `parse_name_status()`: Maps `--name-status` output to {path: {change_type, old_path}}
-- Tools: `repo_diff_summary(repo_path, scope)` for staged/unstaged overview; includes top files by impact
-- Helper: `_diff_summary_for_scope()` used by other modules
+| Module | Purpose | Key Functions |
+|--------|---------|---|
+| [git_branches.py](tools/git_branches.py) | List all branches with activity | `get_branches_raw()`, `parse_branches()` |
+| [git_commit_history.py](tools/git_commit_history.py) | Detailed commit analysis | `get_commit_history_raw()`, `parse_commit_history()` |
+| [git_developer_stats.py](tools/git_developer_stats.py) | Per-developer metrics | `analyze_developer_stats()` - aggregates from commits |
+| [git_compare_developers.py](tools/git_compare_developers.py) | Side-by-side developer comparison | Compares multiple authors across time |
+| [git_file_changes.py](tools/git_file_changes.py) | Track changes to specific files | `get_file_history_raw()` with `--follow` |
+| [git_dashboard.py](tools/git_dashboard.py) | Comprehensive project snapshot | Orchestrator: aggregates status, metrics, risk analysis |
+| [git_sync.py](tools/git_sync.py) | Repository sync operations | Handles fetch/pull operations |
 
-**[git_diff_snippet.py](git_diff_snippet.py)** - Bounded diff delivery
-- `get_diff_snippet_raw()`: Runs `git diff --unified=0` with optional path filters
-- `apply_redactions()`: Scans for secrets (AWS keys, private keys, password= patterns) → `[REDACTED]`
-- `truncate_text()`: Enforces max_lines + max_bytes to prevent huge responses
-- Tool: `repo_diff_snippet(repo_path, scope, paths, max_lines=50, max_bytes=10000)` with safety defaults
+### Foundation Layer
 
-**[git_change_explainer.py](git_change_explainer.py)** - Orchestrator
-- `repo_change_explainer()`: Combines status + diff summaries + evidence snippets into one JSON bundle
-- Smart path picking: Uses top changed files from diff summary to populate evidence
-- Tool parameters: `include="both"` (staged/unstaged), `max_files=3`, `max_lines=250`, `max_bytes=30000`
+**[git_runner.py](git_runner.py)** - Unified Git executor
+- `run_git(repo_path, args, timeout_s=60)` - Single async function for all Git calls
+- Environment setup: `GIT_PAGER=""`, `GIT_TERMINAL_PROMPT="0"` (prevents interactive hanging)
+- Subprocess stderr → custom exceptions (see [exceptions.py](exceptions.py))
+- Default timeout 60s; uses `asyncio.wait_for()` for control
 
-### Data Flow
-```
-MCP Client Request
-        ↓
-repo_change_explainer (or direct status/diff tools)
-        ↓
-    [Orchestrator validates repo, fetches status + diffs]
-        ↓
-    [Redaction → Truncation → JSON serialization]
-        ↓
-    MCP Tool Response (structured dict)
-```
+**[exceptions.py](exceptions.py)** - Error hierarchy
+- `GitNotFoundError` - Git executable missing from PATH
+- `GitRepositoryError` - Invalid repo path
+- `GitCommandError` - Non-zero git exit
+- `GitTimeoutError` - Command exceeded timeout
+
+All tools catch these and wrap in response dicts (no exceptions bubble to MCP layer).
 
 ## Critical Patterns & Conventions
 
-### 1. Git Output Handling
-- **Porcelain v2 Format**: All status queries use `--porcelain=2 --branch` (stable, parseable format)
-- **Raw Tab Separation**: Diff output parsed by splitting on tabs; paths may contain spaces (handled defensively)
-- **Always `--no-pager`**: Prevents interactive output that breaks async subprocess communication
+### 1. Parsing Strategy
+- **Commit lines use pipe delimiter** (`|`): `COMMIT|hash|author|email|date|message`
+- **File changes use tab delimiter**: `additions\tdeletions\tpath`
+- Defensive parsing: Check part counts before unpacking to avoid IndexError
+- Filenames with spaces/special chars handled by tab-based splitting
 
-### 2. Error Handling
-- Missing Git executable → `RuntimeError("Git not found in PATH")`
-- Git command failure (non-zero exit) → `RuntimeError(f"git {args} failed: {stderr}")`
-- Invalid repo path → `ValueError("repo_path does not exist or is not a directory")`
-- Callers should catch and wrap these for MCP response context
+Example from [git_commit_history.py](tools/git_commit_history.py):
+```python
+if line_stripped.startswith("COMMIT|"):
+    parts = line_stripped.split("|", 5)  # Max 5 splits to preserve message content
+    if len(parts) != 6:
+        continue  # Skip malformed lines
+```
 
-### 3. Safety & Redaction
-- **[git_diff_snippet.py](git_diff_snippet.py) patterns** (lines ~55-60):
-  - AWS keys: `AKIA[0-9A-Z]{16}`
-  - Private key blocks: `-----BEGIN.*PRIVATE KEY-----`
-  - Secrets: `password|passwd|secret|token|api_key` followed by `:=` assignment
-- Truncation is applied **after** redaction to ensure secrets don't leak via size limits
-- All applied patterns logged for transparency
+### 2. Time Filtering Pattern
+All analytical tools support `since` / `until` parameters (ISO8601 dates):
+- `get_commit_history_raw()`, `get_file_history_raw()`, etc. append to git args
+- Allows queries like "commits in last week" without hardcoding date math
+- Dashboard risk analysis uses thresholds: see [git_dashboard.py](tools/git_dashboard.py) lines ~17-19
 
-### 4. Tool Response Schema
-All tools return dicts with consistent structure:
+### 3. Response Schema
+All MCP tools return:
 ```python
 {
-    "repo": {"path": repo_path},
-    "summary": {...},           # tool-specific data
-    "errors": {...}             # if validation fails
+    "commits": [...],        # tool-specific main data
+    "repo_path": str,
+    "since": Optional[str],  # if applicable
+    "until": Optional[str],
+    "error": None or str     # wraps exceptions gracefully
 }
 ```
-- Avoid exceptions in tool handlers; wrap in response dict when possible
+
+No exceptions thrown from `@mcp.tool()` handlers; errors wrapped in response.
+
+### 4. Repository Validation
+- `ensure_is_git_repo(repo_path)` called first in each tool
+- Verifies path exists and is directory, then runs `git rev-parse --git-dir`
+- Raises `GitRepositoryError` if invalid; caught and wrapped in response
+
+### 5. Async All The Way
+- All Git calls async via `asyncio.create_subprocess_exec()` (non-blocking I/O)
+- Tools are async coroutines; MCP framework handles awaiting
+- Dashboard aggregates multiple tool results with `asyncio.gather()` for parallelism
 
 ## Development Workflow
 
 ### Running the Server
 ```bash
 python server.py
-# Starts MCP server on stdio; connect via Claude Desktop or similar client
 ```
+- Starts on stdio (Claude Desktop connects here)
+- Registers all tools from `tools/` modules
 
-### Testing a Single Module
-Each module can be tested independently:
+### Running Tests
 ```bash
-python -c "
-import asyncio
-from git_runner import run_git
-result = asyncio.run(run_git('.', ['status', '--short']))
-print(result)
-"
+pytest tests/
+# Set TEST_REPO_PATH env var to test against different repo
+TEST_REPO_PATH=/path/to/repo pytest tests/
 ```
+- Fixtures in [tests/conftest.py](tests/conftest.py)
+- Tests are async (`pytest-asyncio`)
 
-### Adding a New Git Tool
-1. Create new module (e.g., `git_blame.py`)
-2. Implement async functions to fetch/parse Git output
-3. Define `register(mcp: FastMCP)` with `@mcp.tool()` decorator
-4. Import and call in [server.py](server.py): `register_git_blame(mcp)`
+### Adding a New Tool
+1. Create `tools/git_new_feature.py`
+2. Implement:
+   ```python
+   async def get_data_raw(repo_path: str, ...) -> str:
+       """Execute git command."""
+       args = [...]
+       return await run_git(repo_path, args)
+   
+   def parse_data(raw: str) -> List[Dict]:
+       """Parse output."""
+       ...
+   
+   def register(mcp: FastMCP):
+       @mcp.tool()
+       async def my_tool(repo_path: str) -> Dict:
+           await ensure_is_git_repo(repo_path)
+           raw = await get_data_raw(repo_path)
+           return {"data": parse_data(raw), "repo_path": repo_path}
+   ```
+3. Import and call in [server.py](server.py):
+   ```python
+   from tools.git_new_feature import register as register_new
+   register_new(mcp)
+   ```
 
-### Dependencies
-- **mcp[cli]>=1.25.0**: FastMCP server framework
-- **httpx>=0.28.1**: For MCP over HTTP (if needed)
-- **Python >=3.10**: Async/await syntax, pattern matching
+## Project-Specific Patterns
 
-## Project-Specific Quirks
+1. **Test Repository**: Default test repo hardcoded in [conftest.py](tests/conftest.py) (ONNX runtime); override with `TEST_REPO_PATH` env var
+2. **Risk Thresholds**: [git_dashboard.py](tools/git_dashboard.py) defines constants for "high/medium" risk (e.g., >15 commits = high risk); tweak for your team's norms
+3. **Manager-First Design**: All tools return summary stats + top-N items (not full lists) to stay readable in conversation
+4. **File Exclusions**: No built-in filtering; if needed, filter in parser or git args (e.g., `--` glob patterns)
 
-1. **Logging to stderr**: Server logs go to `sys.stderr` (MCP best practice; stdout is reserved for protocol)
-2. **Redaction is conservative**: Only flags known patterns; custom secrets in arbitrary code won't redact
-3. **Scope must be explicit**: Diff tools require `scope="staged"` or `scope="unstaged"`; no "all" mode (too large)
-4. **Path quoting in porcelain v2**: Filenames with special chars are quoted; parser handles this via tab splitting
-5. **Comments in Hebrew**: Some code has Hebrew comments (line ~24 in git_runner.py); don't assume English-only
+## Key Files Reference
 
-## Key Files to Know
-- [server.py](server.py) - Entry point, tool registration
-- [git_runner.py](git_runner.py) - All Git subprocess logic
-- [git_status.py](git_status.py) - Porcelain v2 parsing reference
-- [git_diff_snippet.py](git_diff_snippet.py) - Redaction/truncation reference (security-sensitive)
-- [pyproject.toml](pyproject.toml) - Dependencies and Python version requirement
+- [server.py](server.py) - Entry point; registers all tools
+- [git_runner.py](git_runner.py) - Core async Git executor; **modify for custom git config**
+- [git_dashboard.py](tools/git_dashboard.py) - Largest/most complex; reference for aggregation patterns
+- [pyproject.toml](pyproject.toml) - Dependencies: mcp, httpx, pytest-asyncio
+- [README.md](README.md) - User-facing feature docs
