@@ -29,7 +29,7 @@ This MCP server enables development managers to analyze Git repositories without
 
 - **Time-based filtering** - Analyze any time period (last week, last month, custom ranges)
 - **Developer-specific insights** - Track individual contributions and patterns
-- **Code quality indicators** - Test coverage, commit sizes, collaboration patterns
+- **Code quality indicators** - Commit sizes, code churn, collaboration patterns
 - **Trend analysis** - Compare activity across different time periods
 - **Natural language interface** - No Git commands needed, just ask Claude
 
@@ -134,7 +134,7 @@ what areas? How do their contributions differ?
 
 See a real example of this tool in action: [Live Conversation Demo](https://claude.ai/share/23354fa9-8473-4cdf-a883-dede8b790d62)
 
-This demo shows a complete conversation where a development manager analyzes the ONNX Runtime project, tracking team performance, identifying key contributors, and generating actionable insights.
+This demo shows a complete conversation where a development manager analyzes the [ONNX Runtime](https://github.com/microsoft/onnxruntime) project, tracking team performance, identifying key contributors, and generating actionable insights.
 
 ## Available Tools
 
