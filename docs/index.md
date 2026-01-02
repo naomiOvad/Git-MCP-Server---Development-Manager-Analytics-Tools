@@ -7,7 +7,7 @@ A Model Context Protocol (MCP) server providing Git repository analysis tools de
 Watch how simple it is to analyze your repository with natural language:
 
 <video controls width="800">
-  <source src="demo1.mp4" type="video/mp4">
+  <source src="demoV.mp4" type="video/mp4">
   Your browser does not support the video tag.
 </video>
 
