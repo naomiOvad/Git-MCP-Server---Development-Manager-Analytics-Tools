@@ -13,13 +13,13 @@ This MCP server enables development managers to analyze Git repositories without
 - Generate weekly/monthly progress reports
 -  Make data-driven decisions with insights into team performance and workload distribution
 
-## Live Demo
+## 🎥 Live Demo
 
 Want to see it in action first?
 
-
-- **[Full Documentation & Demo](https://naomiovad.github.io/Git-MCP-Server---Development-Manager-Analytics-Tools/)** - Complete guide with visual examples and video walkthrough
-- **[Example Conversation](https://claude.ai/share/23354fa9-8473-4cdf-a883-dede8b790d62)** - Real analysis of the ONNX Runtime project
+- **[📖 Full Documentation & Demo](https://naomiovad.github.io/Git-MCP-Server---Development-Manager-Analytics-Tools/)** - Complete guide with visual examples and video walkthrough
+- **[📊 Interactive Dashboard](https://naomiovad.github.io/Git-MCP-Server---Development-Manager-Analytics-Tools/examples/onnx_executive_dashboard.html)** - Live executive dashboard with charts and metrics
+- **[💬 Example Conversation](https://claude.ai/share/23354fa9-8473-4cdf-a883-dede8b790d62)** - Real analysis of the ONNX Runtime project
 
 See how development managers use this tool to track team performance, identify key contributors, and generate actionable insights.
 
