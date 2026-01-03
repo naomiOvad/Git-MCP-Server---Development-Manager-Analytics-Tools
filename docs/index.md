@@ -195,7 +195,7 @@ Always working with the latest repository information. Sync with remote anytime.
 
 ## Support & Documentation
 
-- **Full documentation:** [README.md](../README.md) - Installation guide, tool descriptions, and examples
+- **Full documentation:** [README.md](https://github.com/naomiOvad/Git-MCP-Server---Development-Manager-Analytics-Tools#readme) - Installation guide, tool descriptions, and examples
 - **Live demo:** [Example conversation](https://claude.ai/share/23354fa9-8473-4cdf-a883-dede8b790d62) - See it in action
 - **Source code:** [GitHub](https://github.com/naomiOvad/Git-MCP-Server---Development-Manager-Analytics-Tools) - Contribute or report issues 
 
