@@ -7,6 +7,7 @@ from tools.git_compare_developers import register as register_git_compare_develo
 from tools.git_file_changes import register as register_git_file_changes
 from tools.git_sync import register as register_git_sync
 from tools.git_dashboard import register as register_git_dashboard
+from prompts import register_prompts
 
 mcp = FastMCP("git-mcp")
 
@@ -17,6 +18,7 @@ register_git_compare_developers(mcp)
 register_git_file_changes(mcp)
 register_git_sync(mcp)
 register_git_dashboard(mcp)
+register_prompts(mcp)
 
 if __name__ == "__main__":
     mcp.run(transport="stdio")

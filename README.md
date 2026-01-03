@@ -13,6 +13,16 @@ This MCP server enables development managers to analyze Git repositories without
 - Generate weekly/monthly progress reports
 -  Make data-driven decisions with insights into team performance and workload distribution
 
+## Live Demo
+
+Want to see it in action first?
+
+
+- **[Full Documentation & Demo](https://naomiovad.github.io/Git-MCP-Server---Development-Manager-Analytics-Tools/)** - Complete guide with visual examples and video walkthrough
+- **[Example Conversation](https://claude.ai/share/23354fa9-8473-4cdf-a883-dede8b790d62)** - Real analysis of the ONNX Runtime project
+
+See how development managers use this tool to track team performance, identify key contributors, and generate actionable insights.
+
 ## Features
 
 ### 7 Powerful Analytics Tools
@@ -32,6 +42,18 @@ This MCP server enables development managers to analyze Git repositories without
 - **Code quality indicators** - Commit sizes, code churn, collaboration patterns
 - **Trend analysis** - Compare activity across different time periods
 - **Natural language interface** - No Git commands needed, just ask Claude
+
+### 5 Ready-to-Use Prompts
+
+Pre-configured questions for common management tasks - no typing needed, just select and go:
+
+1. 📊 **Executive Dashboard** - Visual overview with charts for last 7 days (includes week-over-week comparison)
+2. 🔍 **Code Review Priority** - Files that changed most in last 7 days
+3. 👤 **Developer Spotlight** - Individual contributions and impact (30 days)
+4. 🌿 **Active Branches** - Track ongoing work (30 days)
+5. ⚡ **Quick Daily Sync** - Today's activity summary
+
+These prompts automatically request visual charts for easy-to-understand insights.
 
 ## Installation
 
@@ -130,12 +152,6 @@ Compare these 3 developers and their work styles. Who focuses on
 what areas? How do their contributions differ?
 ```
 
-## Live Demo
-
-See a real example of this tool in action: [Live Conversation Demo](https://claude.ai/share/23354fa9-8473-4cdf-a883-dede8b790d62)
-
-This demo shows a complete conversation where a development manager analyzes the [ONNX Runtime](https://github.com/microsoft/onnxruntime) project, tracking team performance, identifying key contributors, and generating actionable insights.
-
 ## Available Tools
 
 ### 1. `get_project_dashboard`
@@ -223,6 +239,7 @@ This demo shows a complete conversation where a development manager analyzes the
 ```
 gitMCP/
 ├── server.py              # MCP server entry point
+├── prompts.py             # Pre-configured prompts
 ├── git_runner.py          # Git command execution
 ├── exceptions.py          # Custom error handling
 ├── requirements.txt       # Dependencies

@@ -7,7 +7,7 @@ A Model Context Protocol (MCP) server providing Git repository analysis tools de
 Watch how simple it is to analyze your repository with natural language:
 
 <video controls width="800">
-  <source src="demoV.mp4" type="video/mp4">
+  <source src="demo.mp4" type="video/mp4">
   Your browser does not support the video tag.
 </video>
 
@@ -40,7 +40,39 @@ This MCP server enables development managers to analyze Git repositories **witho
 - ✅ **Developer-specific insights** - Track individual contributions and patterns
 - ✅ **Code quality indicators** - Commit sizes, code churn, collaboration patterns
 - ✅ **Trend analysis** - Compare activity across different time periods
-- ✅ **Natural language interface** - No Git commands needed, just ask Claude  
+- ✅ **Natural language interface** - No Git commands needed, just ask Claude
+- ✅ **Ready-to-use prompts** - Pre-configured questions for common tasks
+
+## 5 Ready-to-Use Prompts
+
+Skip typing - select a prompt and get instant insights:
+
+| Prompt | Description | What You Get |
+|--------|-------------|--------------|
+| 📊 **Executive Dashboard** | Visual overview (7 days) | Bar charts with week-over-week comparison, code churn, top files |
+| 🔍 **Code Review Priority** | Most changed files | Files needing review, sorted by activity |
+| 👤 **Developer Spotlight** | Individual deep dive (30 days) | Personal stats, team comparison, contributions, trends |
+| 🌿 **Active Branches** | Ongoing work tracker | Active branches with commit counts and owners |
+| ⚡ **Quick Daily Sync** | Today's activity | Fast update with commits, changes, and summary |
+
+## Visual Examples
+
+Example outputs from the Executive Dashboard prompt:
+
+### Commits per Developer (Week-over-Week)
+<img src="images/commits-per-developer.png" alt="Commits Comparison" width="700">
+
+*Track team activity and identify trends*
+
+### Code Churn Analysis
+<img src="images/code-churn-per-developer.png" alt="Code Churn" width="700">
+
+*Measure code volume by developer*
+
+### Top Changed Files
+<img src="images/top-changed-files.png" alt="File Changes" width="700">
+
+*Identify files requiring review attention*
 
 ## Example Questions You Can Ask
 
