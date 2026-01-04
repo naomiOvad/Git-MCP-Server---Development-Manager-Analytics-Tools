@@ -142,7 +142,7 @@ more or less productive? Show me the numbers.
 
 **Branch Management:**
 ```
-The developer adrianlizarraga – which branches has he worked on recently?
+Which branches has john.doe@company.com worked on recently?
 Show me his commits and the names of the branches he worked on.
 ```
 
@@ -334,4 +334,4 @@ Developed as a professional tool for development managers to gain insights into 
 - Python 3.8+
 - Git
 
-**Tested on:** ONNX Runtime (large-scale open-source project with 60+ active developers)
+**Tested on:** [ONNX Runtime](https://github.com/microsoft/onnxruntime) - Microsoft's open-source project with 870+ contributors
