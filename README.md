@@ -232,6 +232,36 @@ what areas? How do their contributions differ?
 
 **Returns:** Status of fetch operation
 
+## Tool Workflows
+
+Examples of how Claude sequences multiple tools to answer complex questions:
+
+### Weekly Team Review
+**Question:** "Compare each developer's performance this week vs last week and rank them"
+
+**Tool Sequence:**
+1. `get_commit_history` (both periods) → Gather commit data
+2. `get_developer_stats` (multiple developers) → Individual metrics
+3. `compare_developer_stats` → Ranking and comparison
+
+### Code Review Prioritization
+**Question:** "What files need urgent code review?"
+
+**Tool Sequence:**
+1. `get_project_dashboard` → Identify hotspot files
+2. `get_commit_history` → Detailed change analysis
+3. Response prioritizes files by activity and risk
+
+### Developer Performance Analysis
+**Question:** "Show me john.doe@company.com performance, compare to team, and list his recent commits"
+
+**Tool Sequence:**
+1. `get_developer_stats` (target developer) → Individual metrics
+2. `compare_developer_stats` (all developers) → Team comparison
+3. `get_commit_history` (filtered by developer) → Recent work
+
+These workflows show how the server intelligently combines tools to provide comprehensive answers.
+
 ## Technical Details
 
 ### Architecture
