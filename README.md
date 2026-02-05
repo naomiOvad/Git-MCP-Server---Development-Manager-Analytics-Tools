@@ -67,7 +67,7 @@ These prompts automatically request visual charts for easy-to-understand insight
 
 1. **Clone the repository**
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/naomiOvad/Git-MCP-Server---Development-Manager-Analytics-Tools gitMCP
    cd gitMCP
    ```
 

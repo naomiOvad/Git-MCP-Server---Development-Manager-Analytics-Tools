@@ -101,7 +101,7 @@ Example outputs from the Executive Dashboard prompt:
 
 **1. Clone and install**
 ```bash
-git clone <repository-url>
+git clone https://github.com/naomiOvad/Git-MCP-Server---Development-Manager-Analytics-Tools gitMCP
 cd gitMCP
 pip install -r requirements.txt
 ```
